@@ -8,6 +8,11 @@ var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
+var SessionStore = require('session-mongoose')(express);
+var store = new SessionStore({
+    url: 'mongodb://localhost/session',
+    interval: 120000
+});
 
 var app = express();
 
@@ -20,6 +25,22 @@ app.use(express.logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.methodOverride());
+app.use(express.cookieParser());
+app.use(express.cookieSession({secret: 'aSecret'}));
+app.use(express.session(
+    {secret: 'aSecret', store: store, cookie: {maxAge: 900000}}
+));
+app.use(function(req, res, next) {
+    app.locals.user = req.session.user;
+    var err = req.session.error;
+    delete req.session.error;
+    app.locals.message = '';
+    if (err) {
+        app.locals.message = '<div class="alert alert-danger">' +
+            err + '</div>';
+    }
+    next();
+});
 app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
