@@ -54,3 +54,19 @@ exports.home = function(req, res) {
     }
     res.render('home', {title: 'Home'});
 };
+
+exports.authentication = function(req, res, next) {
+    if (!req.session.user) {
+        req.session.error = '请先登录';
+        return res.redirect('/login');
+    }
+    next();
+};
+
+exports.notAuthentication = function(req, res, next) {
+    if (req.session.user) {
+        req.session.error = '已登录';
+        return res.redirect('/');
+    }
+    next();
+};
